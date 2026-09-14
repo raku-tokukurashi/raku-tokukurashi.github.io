@@ -13,37 +13,129 @@
       "slug": "furusato",
       "name": "ふるさと納税",
       "icon": "🎁",
-      "desc": "レビューの多い返礼品を、ジャンルごとにまとめています。寄付額と内容は各回の確認日時点です。"
+      "desc": "レビューの多い返礼品を、ジャンルごとにまとめています。寄付額と内容は各回の確認日時点です。",
+      "subs": [
+        {
+          "slug": "rice",
+          "name": "お米"
+        },
+        {
+          "slug": "meat",
+          "name": "お肉"
+        },
+        {
+          "slug": "seafood",
+          "name": "海鮮"
+        },
+        {
+          "slug": "fruit",
+          "name": "果物・スイーツ"
+        },
+        {
+          "slug": "goods",
+          "name": "日用品"
+        }
+      ]
     },
     {
       "slug": "kaji",
       "name": "家事・掃除・洗濯",
       "icon": "🧹",
-      "desc": "毎日の家事が少しラクになるグッズとアイデア。"
+      "desc": "毎日の家事が少しラクになるグッズとアイデア。",
+      "subs": [
+        {
+          "slug": "detergent",
+          "name": "洗剤"
+        },
+        {
+          "slug": "cleaning",
+          "name": "掃除道具"
+        },
+        {
+          "slug": "laundry",
+          "name": "洗濯"
+        }
+      ]
     },
     {
       "slug": "kitchen",
       "name": "キッチン・料理",
       "icon": "🍳",
-      "desc": "料理と片付けの時短になるもの。"
+      "desc": "料理と片付けの時短になるもの。",
+      "subs": [
+        {
+          "slug": "storage",
+          "name": "保存容器"
+        },
+        {
+          "slug": "cooking",
+          "name": "調理道具"
+        },
+        {
+          "slug": "dishes",
+          "name": "洗い物・片付け"
+        }
+      ]
     },
     {
       "slug": "kosodate",
       "name": "子育て・朝の支度",
       "icon": "🎒",
-      "desc": "共働き・子育て家庭の支度を助けるもの。"
+      "desc": "共働き・子育て家庭の支度を助けるもの。",
+      "subs": [
+        {
+          "slug": "bento",
+          "name": "お弁当"
+        },
+        {
+          "slug": "morning",
+          "name": "朝の支度"
+        },
+        {
+          "slug": "school",
+          "name": "学用品"
+        }
+      ]
     },
     {
       "slug": "shuno",
       "name": "収納・片付け",
       "icon": "📦",
-      "desc": "散らかりにくくする収納のアイデア。"
+      "desc": "散らかりにくくする収納のアイデア。",
+      "subs": [
+        {
+          "slug": "closet",
+          "name": "クローゼット"
+        },
+        {
+          "slug": "kitchen-storage",
+          "name": "キッチン収納"
+        },
+        {
+          "slug": "toys",
+          "name": "おもちゃ・子ども用品"
+        }
+      ]
     },
     {
       "slug": "season",
       "name": "季節の備え",
       "icon": "🍂",
-      "desc": "暑さ・寒さ・湿気など、季節ごとの備え。"
+      "desc": "暑さ・寒さ・湿気など、季節ごとの備え。",
+      "subs": [
+        {
+          "slug": "summer",
+          "name": "暑さ対策"
+        },
+        {
+          "slug": "winter",
+          "name": "寒さ対策"
+        },
+        {
+          "slug": "humidity",
+          "name": "湿気・結露"
+        }
+      ]
     }
   ]
 }

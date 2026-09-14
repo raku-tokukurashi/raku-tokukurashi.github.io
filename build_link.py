@@ -3,14 +3,15 @@ data/<slug>.json と posts/<slug>/img/ の画像を足してから実行する�
 まい垢（rakubiyo.github.io）の build_link.py を元に、暮らし・ふるさと納税向けに書き換えたもの（2026-09-14）。
 
 ⚠️ ふるさと納税は「寄付額」と書き、価格・お得・還元などの言葉を使わない。
-⚠️ いろんなジャンルが混ざるので、カテゴリーで分ける（2026-09-14 監督）。
+⚠️ いろんなジャンルが混ざるので、カテゴリーとサブカテゴリーで分ける（2026-09-14 監督）。
    「端のほうにカテゴリー分けでまとめられてるようにしてほしい」
    「HPへ商品を登録する際もある程度のカテゴリー分けしてとうろくするように」
-   - 回のデータに "category"（site.json の categories の slug）を必ず書く
-   - 商品1つずつにも "category"（同じく slug）と "sub"（カテゴリーの中の小分け。例：お米／お肉、洗剤／掃除道具）を書く。
-     書かなければ回の category と rank を使う
-   - PCは左端の縦メニュー、スマホはヘッダー下の横スクロール。数は商品の数。0件のカテゴリーは出さない
-   - /category/<slug>/ には、そのカテゴリーの商品を「sub」ごとに並べ、どの回で紹介したかも出す"""
+   「サブカテゴリーでも分けたほうがいいかな ふるさと納税⇒お肉とか海鮮などで」
+   - カテゴリーとサブカテゴリーの正本は site.json の categories[].subs
+   - 回のデータに "category"、商品1つずつに "category" と "sub"（subs の slug）を必ず書く。無い・違うと止まる
+   - PCは左端の縦メニュー（カテゴリーの下にサブカテゴリーを入れ子）、スマホはヘッダー下の横スクロール
+   - /category/<cat>/ はサブカテゴリーごとに商品を並べる。/category/<cat>/<sub>/ はそのサブカテゴリーの商品だけ
+   - 数は商品の数。商品が0件のカテゴリー・サブカテゴリーは出さない"""
 import json
 import re
 from pathlib import Path
@@ -20,6 +21,7 @@ from urllib.parse import urlencode
 ROOT = Path(__file__).resolve().parent
 SITE = json.loads((ROOT / 'site.json').read_text(encoding='utf-8'))
 CATS = {c['slug']: c for c in SITE['categories']}
+SUBS = {(c['slug'], s['slug']): s for c in SITE['categories'] for s in c.get('subs', [])}
 
 
 def e(value):
@@ -37,8 +39,8 @@ def item_cat(p, it):
     return it.get('category') or p['category']
 
 
-def item_sub(it):
-    return it.get('sub') or it['rank']
+def sub_name(p, it):
+    return SUBS[(item_cat(p, it), it['sub'])]['name']
 
 
 def aff(it):
@@ -51,24 +53,34 @@ def all_items(posts):
             yield p, i, it
 
 
-def side_nav(posts, up, current=''):
-    """端のカテゴリーメニュー。商品があるカテゴリーだけ、site.json の並び順で出す。数は商品の数。"""
-    counts = {}
+def counts_of(posts):
+    cat, sub = {}, {}
     for p, _, it in all_items(posts):
-        counts[item_cat(p, it)] = counts.get(item_cat(p, it), 0) + 1
-    total = sum(counts.values())
-    links = [f'<li><a href="{up or "./"}"{" aria-current=\"page\"" if current == "" else ""}><i aria-hidden="true">🏠</i>すべて<span>{total}</span></a></li>']
+        c = item_cat(p, it)
+        cat[c] = cat.get(c, 0) + 1
+        sub[(c, it['sub'])] = sub.get((c, it['sub']), 0) + 1
+    return cat, sub
+
+
+def side_nav(posts, up, current=('', '')):
+    """端のメニュー。カテゴリーの下にサブカテゴリーを入れ子にする。商品のあるものだけ、site.json の順に出す。"""
+    cc, sc = counts_of(posts)
+    cur_cat, cur_sub = current
+    rows = [f'<li class="cat"><a href="{up or "./"}"{" aria-current=\"page\"" if not cur_cat else ""}><i aria-hidden="true">🏠</i>すべて<span>{sum(cc.values())}</span></a></li>']
     for c in SITE['categories']:
-        n = counts.get(c['slug'], 0)
-        if not n:
+        if not cc.get(c['slug']):
             continue
-        cur = ' aria-current="page"' if current == c['slug'] else ''
-        links.append(f'<li><a href="{up}category/{e(c["slug"])}/"{cur}><i aria-hidden="true">{e(c.get("icon", ""))}</i>{e(c["name"])}<span>{n}</span></a></li>')
-    return f'<nav class="side" aria-label="カテゴリー"><p class="side-title">CATEGORY</p><ul>{"".join(links)}</ul></nav>'
+        on = ' aria-current="page"' if (cur_cat == c['slug'] and not cur_sub) else ''
+        subs = ''.join(
+            f'<li><a href="{up}category/{e(c["slug"])}/{e(s["slug"])}/"{" aria-current=\"page\"" if (cur_cat == c["slug"] and cur_sub == s["slug"]) else ""}>{e(s["name"])}<span>{sc[(c["slug"], s["slug"])]}</span></a></li>'
+            for s in c.get('subs', []) if sc.get((c['slug'], s['slug'])))
+        open_cls = ' open' if cur_cat == c['slug'] else ''
+        rows.append(f'<li class="cat{open_cls}"><a href="{up}category/{e(c["slug"])}/"{on}><i aria-hidden="true">{e(c.get("icon", ""))}</i>{e(c["name"])}<span>{cc[c["slug"]]}</span></a><ul class="subs">{subs}</ul></li>')
+    return f'<nav class="side" aria-label="カテゴリー"><p class="side-title">CATEGORY</p><ul>{"".join(rows)}</ul></nav>'
 
 
-def page(title, body, posts, path='', cover='', current=''):
-    up = '../../' if path else ''
+def page(title, body, posts, path='', cover='', current=('', '')):
+    up = '../' * path.count('/')
     url = SITE['site_url'].rstrip('/') + '/' + path
     desc = SITE['desc']
     notes = ''.join(f'<p>{e(n)}</p>' for n in SITE['notes'])
@@ -92,13 +104,13 @@ def post_html(p, posts):
     furusato = p.get('kind') == 'furusato'
     cat = CATS[p['category']]
     jumps = ''.join(f'<a href="#item-{i}">{e(it["rank"])}<span>{e(it.get("brand", ""))}</span></a>' for i, it in enumerate(items))
-    cards, last_sub = [], None
+    cards, last = [], None
     for i, it in enumerate(items):
-        sub = item_sub(it)
-        if sub != last_sub:          # 小分けが変わるところに見出し
-            ic = CATS[item_cat(p, it)]
-            cards.append(f'<h2 class="group-head"><i aria-hidden="true">{e(ic.get("icon", ""))}</i>{e(sub)}</h2>')
-            last_sub = sub
+        key = (item_cat(p, it), it['sub'])
+        if key != last:          # サブカテゴリーが変わるところに見出し（サブカテゴリーのページへ飛べる）
+            ic = CATS[key[0]]
+            cards.append(f'<h2 class="group-head"><i aria-hidden="true">{e(ic.get("icon", ""))}</i>{e(sub_name(p, it))}<a href="../../category/{e(key[0])}/{e(key[1])}/">ほかの回の{e(sub_name(p, it))}も見る →</a></h2>')
+            last = key
         voices = it.get('voices', [it.get('copy', '')])
         positive = voices[:-1] if len(voices) > 1 and it.get('last_is_caution', True) else voices
         caution = voices[-1] if len(voices) > 1 and it.get('last_is_caution', True) else ''
@@ -122,7 +134,7 @@ def post_html(p, posts):
 <div class="selection-note">{notes}</div>
 <section class="products" aria-label="紹介したもの">{''.join(cards)}</section>
 <section class="sources"><p class="eyebrow">SOURCE & NOTES</p><h2>この回の出典</h2><a href="{e(src['url'])}" target="_blank" rel="noopener">{e(src['name'])} ↗</a><p>{e(src['period'])}</p></section><a class="all-link" href="../../">ほかの回を見る <span>→</span></a>'''
-    return page(p['title'], body, posts, f"posts/{p['slug']}/", f"posts/{p['slug']}/thumb.jpg", current=p['category'])
+    return page(p['title'], body, posts, f"posts/{p['slug']}/", f"posts/{p['slug']}/thumb.jpg", current=(p['category'], ''))
 
 
 def entry(p, prefix, latest=False):
@@ -140,23 +152,24 @@ def mini_card(p, i, it, prefix):
 <a class="mini-buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener">{cta} ↗</a></div></article>'''
 
 
+def sub_chips(c, sc, prefix, cur=''):
+    return ''.join(
+        f'<a href="{prefix}category/{e(c["slug"])}/{e(s["slug"])}/"{" aria-current=\"page\"" if cur == s["slug"] else ""}>{e(s["name"])}<span>{sc[(c["slug"], s["slug"])]}</span></a>'
+        for s in c.get('subs', []) if sc.get((c['slug'], s['slug'])))
+
+
 def hub_html(posts):
     if not posts:
         return page('暮らしのライフハック', '<section class="hero"><h1>準備しています。</h1></section>', posts)
     latest = posts[0]
+    cc, sc = counts_of(posts)
     still = ''.join(image(latest, it, lazy=False) for it in latest['items'][:3])
     groups = []
     for c in SITE['categories']:
-        its = [(p, i, it) for p, i, it in all_items(posts) if item_cat(p, it) == c['slug']]
-        if not its:
+        if not cc.get(c['slug']):
             continue
-        ps = [p for p in posts if any(q is p for q, _, _ in its)]
-        subs = []
-        for _, _, it in its:
-            if item_sub(it) not in subs:
-                subs.append(item_sub(it))
-        chips = ''.join(f'<a href="category/{e(c["slug"])}/#sub-{k}">{e(s)}</a>' for k, s in enumerate(subs))
-        groups.append(f'''<section class="edits cat-group" id="cat-{e(c['slug'])}"><div class="section-title"><div><p class="eyebrow">CATEGORY</p><h2>{e(c.get('icon', ''))} {e(c['name'])}</h2></div><a class="cat-more" href="category/{e(c['slug'])}/">{len(its)}品を見る →</a></div><div class="sub-chips">{chips}</div>{''.join(entry(p, '', p is latest) for p in ps[:3])}</section>''')
+        ps = [p for p in posts if any(item_cat(p, it) == c['slug'] for it in p['items'])]
+        groups.append(f'''<section class="edits cat-group" id="cat-{e(c['slug'])}"><div class="section-title"><div><p class="eyebrow">CATEGORY</p><h2>{e(c.get('icon', ''))} {e(c['name'])}</h2></div><a class="cat-more" href="category/{e(c['slug'])}/">{cc[c['slug']]}品を見る →</a></div><div class="sub-chips">{sub_chips(c, sc, '')}</div>{''.join(entry(p, '', p is latest) for p in ps[:3])}</section>''')
     body = f'''<section class="hero"><div class="hero-copy"><p class="eyebrow">RAKUTOKU KURASHI</p><h1>知ってたら、<br><em>もっとラク</em>だった。</h1><p>動画で紹介した暮らしのアイデアや<br>ふるさと納税の返礼品を、カテゴリーごとにまとめています。</p><a href="posts/{e(latest['slug'])}/" class="hero-link">最新の回を見る <span>↗</span></a></div><div class="still-life">{still}<span class="still-caption">FROM THE LATEST</span></div></section>
 {''.join(groups)}
 <section class="about"><p class="eyebrow">OUR POINT OF VIEW</p><h2>良かった声も、<br>気をつけたい声も。</h2><p>みんなのレビューを読んで、<br>選ぶときのきっかけになるようにまとめています。</p><p class="about-note">コメントはレビューの要約です。<br>特定の1人の体験ではありません。</p></section>'''
@@ -164,18 +177,27 @@ def hub_html(posts):
 
 
 def category_html(c, posts):
+    cc, sc = counts_of(posts)
     its = [(p, i, it) for p, i, it in all_items(posts) if item_cat(p, it) == c['slug']]
     ps = [p for p in posts if any(q is p for q, _, _ in its)]
-    subs = []
-    for _, _, it in its:
-        if item_sub(it) not in subs:
-            subs.append(item_sub(it))
-    chips = ''.join(f'<a href="#sub-{k}">{e(s)}<span>{sum(1 for _, _, it in its if item_sub(it) == s)}</span></a>' for k, s in enumerate(subs))
-    blocks = ''.join(f'''<section class="sub-block" id="sub-{k}"><h2 class="group-head">{e(s)}</h2><div class="mini-grid">{''.join(mini_card(p, i, it, '../../') for p, i, it in its if item_sub(it) == s)}</div></section>''' for k, s in enumerate(subs))
+    blocks = ''.join(
+        f'''<section class="sub-block" id="sub-{e(s['slug'])}"><h2 class="group-head">{e(s['name'])}<a href="{e(s['slug'])}/">{e(s['name'])}だけ見る →</a></h2><div class="mini-grid">{''.join(mini_card(p, i, it, '../../') for p, i, it in its if it['sub'] == s['slug'])}</div></section>'''
+        for s in c.get('subs', []) if sc.get((c['slug'], s['slug'])))
     body = f'''<section class="cat-page"><a class="back" href="../../">← すべて</a><div class="section-title"><div><p class="eyebrow">CATEGORY</p><h1>{e(c.get('icon', ''))} {e(c['name'])}</h1><p class="cat-desc">{e(c.get('desc', ''))}</p></div><span>{len(its)} ITEMS</span></div>
-<nav class="sub-chips" aria-label="小分け">{chips}</nav>{blocks}
+<nav class="sub-chips" aria-label="サブカテゴリー">{sub_chips(c, sc, '../../')}</nav>{blocks}
 <div class="edits"><div class="section-title"><div><p class="eyebrow">EDITS</p><h2>このカテゴリーを紹介した回</h2></div><span>{len(ps):02d} EDITS</span></div>{''.join(entry(p, '../../') for p in ps)}</div></section>'''
-    return page(c['name'], body, posts, f"category/{c['slug']}/", f"posts/{ps[0]['slug']}/thumb.jpg", current=c['slug'])
+    return page(c['name'], body, posts, f"category/{c['slug']}/", f"posts/{ps[0]['slug']}/thumb.jpg", current=(c['slug'], ''))
+
+
+def sub_html(c, s, posts):
+    cc, sc = counts_of(posts)
+    its = [(p, i, it) for p, i, it in all_items(posts) if item_cat(p, it) == c['slug'] and it['sub'] == s['slug']]
+    ps = [p for p in posts if any(q is p for q, _, _ in its)]
+    body = f'''<section class="cat-page"><a class="back" href="../">← {e(c['name'])}</a><div class="section-title"><div><p class="eyebrow">{e(c['name'])}</p><h1>{e(c.get('icon', ''))} {e(s['name'])}</h1></div><span>{len(its)} ITEMS</span></div>
+<nav class="sub-chips" aria-label="サブカテゴリー">{sub_chips(c, sc, '../../../', s['slug'])}</nav>
+<div class="mini-grid">{''.join(mini_card(p, i, it, '../../../') for p, i, it in its)}</div>
+<div class="edits"><div class="section-title"><div><p class="eyebrow">EDITS</p><h2>紹介した回</h2></div><span>{len(ps):02d} EDITS</span></div>{''.join(entry(p, '../../../') for p in ps)}</div></section>'''
+    return page(f"{s['name']}（{c['name']}）", body, posts, f"category/{c['slug']}/{s['slug']}/", f"posts/{ps[0]['slug']}/thumb.jpg", current=(c['slug'], s['slug']))
 
 
 def main():
@@ -189,18 +211,26 @@ def main():
         for it in p['items']:
             if item_cat(p, it) not in CATS:
                 raise ValueError(f"{p['slug']} の商品「{it['name']}」の category が site.json に無い: {it.get('category')}")
-            if not it.get('sub'):
-                print(f"⚠ {p['slug']}「{it['name']}」に sub（小分け）が無い。rank を代わりに使う")
+            if (item_cat(p, it), it.get('sub')) not in SUBS:
+                raise ValueError(f"{p['slug']} の商品「{it['name']}」の sub が site.json の {item_cat(p, it)} の subs に無い: {it.get('sub')}")
         target = ROOT / 'posts' / p['slug']
         target.mkdir(parents=True, exist_ok=True)
         (target / 'index.html').write_text(post_html(p, posts), encoding='utf-8')
-    used = [c for c in SITE['categories'] if any(item_cat(p, it) == c['slug'] for p, _, it in all_items(posts))]
-    for c in used:
+    cc, sc = counts_of(posts)
+    n_sub = 0
+    for c in SITE['categories']:
+        if not cc.get(c['slug']):
+            continue
         target = ROOT / 'category' / c['slug']
         target.mkdir(parents=True, exist_ok=True)
         (target / 'index.html').write_text(category_html(c, posts), encoding='utf-8')
+        for s in c.get('subs', []):
+            if sc.get((c['slug'], s['slug'])):
+                (target / s['slug']).mkdir(parents=True, exist_ok=True)
+                (target / s['slug'] / 'index.html').write_text(sub_html(c, s, posts), encoding='utf-8')
+                n_sub += 1
     (ROOT / 'index.html').write_text(hub_html(posts), encoding='utf-8')
-    print(f'Built {len(posts)} posts, {len(used)} categories and index')
+    print(f'Built {len(posts)} posts, {sum(1 for c in cc if cc[c])} categories, {n_sub} subcategories and index')
 
 
 if __name__ == '__main__':

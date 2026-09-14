@@ -29,7 +29,7 @@
     {
       "rank": "お米",
       "category": "furusato",
-      "sub": "お米",
+      "sub": "rice",
       "name": "佐賀県上峰町 さがびより 5kg",
       "brand": "佐賀県上峰町",
       "product": "さがびより 5kg",
@@ -46,7 +46,7 @@
     {
       "rank": "お米",
       "category": "furusato",
-      "sub": "お米",
+      "sub": "rice",
       "name": "石川県宝達志水町 石川米こしひかり 5kg",
       "brand": "石川県宝達志水町",
       "product": "石川米こしひかり 5kg",
@@ -63,7 +63,7 @@
     {
       "rank": "お米",
       "category": "furusato",
-      "sub": "お米",
+      "sub": "rice",
       "name": "福岡県赤村 農家応援米 訳あり 5kg",
       "brand": "福岡県赤村",
       "product": "農家応援米 訳あり 5kg",
@@ -80,7 +80,7 @@
     {
       "rank": "お米",
       "category": "furusato",
-      "sub": "お米",
+      "sub": "rice",
       "name": "熊本県高森町 阿蘇だわら 5kg",
       "brand": "熊本県高森町",
       "product": "阿蘇だわら 5kg",
@@ -97,7 +97,7 @@
     {
       "rank": "お米",
       "category": "furusato",
-      "sub": "お米",
+      "sub": "rice",
       "name": "熊本県御船町 熊本ふるさと無洗米 5kg",
       "brand": "熊本県御船町",
       "product": "熊本ふるさと無洗米 5kg",
@@ -114,7 +114,7 @@
     {
       "rank": "お肉",
       "category": "furusato",
-      "sub": "お肉",
+      "sub": "meat",
       "name": "岩手県花巻市 厚切り牛タン 塩味 500g",
       "brand": "岩手県花巻市",
       "product": "厚切り牛タン 塩味 500g",
@@ -131,7 +131,7 @@
     {
       "rank": "お肉",
       "category": "furusato",
-      "sub": "お肉",
+      "sub": "meat",
       "name": "福岡県飯塚市 鉄板焼ハンバーグ 10個",
       "brand": "福岡県飯塚市",
       "product": "鉄板焼ハンバーグ 10個",
@@ -148,7 +148,7 @@
     {
       "rank": "お肉",
       "category": "furusato",
-      "sub": "お肉",
+      "sub": "meat",
       "name": "宮崎県都城市 宮崎牛 赤身 500g",
       "brand": "宮崎県都城市",
       "product": "宮崎牛 赤身 500g",
@@ -165,7 +165,7 @@
     {
       "rank": "お肉",
       "category": "furusato",
-      "sub": "お肉",
+      "sub": "meat",
       "name": "宮崎県宮崎市 豚肉バラエティセット 2.1kg",
       "brand": "宮崎県宮崎市",
       "product": "豚肉バラエティセット 2.1kg",
@@ -182,7 +182,7 @@
     {
       "rank": "お肉",
       "category": "furusato",
-      "sub": "お肉",
+      "sub": "meat",
       "name": "滋賀県竜王町 近江牛入りハンバーグ 1kg",
       "brand": "滋賀県竜王町",
       "product": "近江牛入りハンバーグ 1kg",
@@ -199,7 +199,7 @@
     {
       "rank": "お肉",
       "category": "furusato",
-      "sub": "お肉",
+      "sub": "meat",
       "name": "大阪府泉佐野市 牛タン 暴れ盛り 500g",
       "brand": "大阪府泉佐野市",
       "product": "牛タン 暴れ盛り 500g",
@@ -216,7 +216,7 @@
     {
       "rank": "海鮮",
       "category": "furusato",
-      "sub": "海鮮",
+      "sub": "seafood",
       "name": "北海道別海町 訳ありホタテ貝柱",
       "brand": "北海道別海町",
       "product": "訳ありホタテ貝柱",
@@ -233,7 +233,7 @@
     {
       "rank": "海鮮",
       "category": "furusato",
-      "sub": "海鮮",
+      "sub": "seafood",
       "name": "千葉県銚子市 訳あり厚切り塩銀鮭",
       "brand": "千葉県銚子市",
       "product": "訳あり厚切り塩銀鮭",
@@ -250,7 +250,7 @@
     {
       "rank": "海鮮",
       "category": "furusato",
-      "sub": "海鮮",
+      "sub": "seafood",
       "name": "北海道白糠町 いくら醤油漬け",
       "brand": "北海道白糠町",
       "product": "いくら醤油漬け",
@@ -267,7 +267,7 @@
     {
       "rank": "海鮮",
       "category": "furusato",
-      "sub": "海鮮",
+      "sub": "seafood",
       "name": "北海道白糠町 エンペラーサーモン",
       "brand": "北海道白糠町",
       "product": "エンペラーサーモン",
@@ -284,7 +284,7 @@
     {
       "rank": "海鮮",
       "category": "furusato",
-      "sub": "海鮮",
+      "sub": "seafood",
       "name": "福井県敦賀市 背ワタなし むきえび",
       "brand": "福井県敦賀市",
       "product": "背ワタなし むきえび",
@@ -301,7 +301,7 @@
     {
       "rank": "海鮮",
       "category": "furusato",
-      "sub": "海鮮",
+      "sub": "seafood",
       "name": "愛媛県愛南町 訳ありかつおのたたき",
       "brand": "愛媛県愛南町",
       "product": "訳ありかつおのたたき",
@@ -318,7 +318,7 @@
     {
       "rank": "果物・スイーツ",
       "category": "furusato",
-      "sub": "果物・スイーツ",
+      "sub": "fruit",
       "name": "山梨県富士吉田市 シャインマスカット",
       "brand": "山梨県富士吉田市",
       "product": "シャインマスカット",
@@ -335,7 +335,7 @@
     {
       "rank": "果物・スイーツ",
       "category": "furusato",
-      "sub": "果物・スイーツ",
+      "sub": "fruit",
       "name": "和歌山県有田市 有田みかん 未来への虹",
       "brand": "和歌山県有田市",
       "product": "有田みかん 未来への虹",
@@ -352,7 +352,7 @@
     {
       "rank": "果物・スイーツ",
       "category": "furusato",
-      "sub": "果物・スイーツ",
+      "sub": "fruit",
       "name": "福岡県小竹町 あまおう（先行予約）",
       "brand": "福岡県小竹町",
       "product": "あまおう（先行予約）",
@@ -369,7 +369,7 @@
     {
       "rank": "果物・スイーツ",
       "category": "furusato",
-      "sub": "果物・スイーツ",
+      "sub": "fruit",
       "name": "北海道千歳市 ルタオ 食べ比べセット",
       "brand": "北海道千歳市",
       "product": "ルタオ 食べ比べセット",
