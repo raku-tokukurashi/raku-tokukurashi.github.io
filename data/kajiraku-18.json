@@ -17,7 +17,24 @@
     "低評価の割合は、各商品のレビューページに表示された星の分布から計算したものです。",
     "耐荷重・素材などは各メーカー（ショップ）の表記です。"
   ],
-  "videos": [],
+  "videos": [
+    {
+      "kind": "長編",
+      "title": "【共働き家庭の最初の1個】迷ったらまずコレ…レビュー数万件でも低評価がほぼない家事ラクグッズ18選",
+      "id": "o2Sz7dfqUgo",
+      "url": "https://youtu.be/o2Sz7dfqUgo",
+      "date": "2026-09-15",
+      "thumb": "posts/kajiraku-18/video_long.jpg"
+    },
+    {
+      "kind": "ショート",
+      "title": "低評価1%未満！共働き家庭の最初の1個にしたい家事ラクグッズ6選",
+      "id": "zN1egZ9yWaM",
+      "url": "https://www.youtube.com/shorts/zN1egZ9yWaM",
+      "date": "2026-09-15",
+      "thumb": "posts/kajiraku-18/video_short.jpg"
+    }
+  ],
   "source": {
     "name": "楽天市場 各商品ページのレビュー",
     "url": "https://www.rakuten.co.jp/",

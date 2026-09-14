@@ -15,6 +15,7 @@ data/<slug>.json と posts/<slug>/img/ の画像を足してから実行する�
 ⚠️ 動画一覧（2026-09-14 監督「あとは動画一覧もあるよね？」）
    - 回のデータに "videos": [{"kind": "長編|ショート", "title", "id"（YouTubeの動画ID）, "url"}] を書く
    - /videos/ に新しい順で並べ、端のメニューの「すべて」の下に出す。トップにも最新の動画を出す
+   - 予約公開の動画はYouTubeのサムネイル画像がまだ取れないので、"thumb"（サイト内の画像パス）を書くとそれを使う
    - 年と月でも分ける（監督「これも一応年と月のサブ内の入れておいて」）。端のメニューで動画一覧の下に「2026年9月」を入れ子にし、
      /videos/<YYYY-MM>/ を作る。月は動画の "date"（無ければ回の date）で決める"""
 import json
@@ -210,7 +211,7 @@ def sub_chips(c, sc, prefix, cur=''):
 def video_card(p, v, prefix):
     cat = CATS[p['category']]
     short = v['kind'] == 'ショート'
-    return f'''<article class="video-card{' is-short' if short else ''}"><a class="video-thumb" href="{e(v['url'])}" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/{e(v['id'])}/mqdefault.jpg" alt="{e(v['title'])}" width="320" height="180" decoding="async"><span class="video-kind">{e(v['kind'])}</span><span class="video-play" aria-hidden="true">▶</span></a>
+    return f'''<article class="video-card{' is-short' if short else ''}"><a class="video-thumb" href="{e(v['url'])}" target="_blank" rel="noopener"><img src="{(prefix + e(v['thumb'])) if v.get('thumb') else 'https://i.ytimg.com/vi/' + e(v['id']) + '/mqdefault.jpg'}" alt="{e(v['title'])}" width="320" height="180" decoding="async"><span class="video-kind">{e(v['kind'])}</span><span class="video-play" aria-hidden="true">▶</span></a>
 <div class="video-info"><p class="eyebrow">{e(cat['name'])} / {e(p['date'].replace('-', '.'))}</p><h3>{e(v['title'])}</h3>
 <div class="video-links"><a class="video-yt" href="{e(v['url'])}" target="_blank" rel="noopener">YouTubeで見る ↗</a><a href="{prefix}posts/{e(p['slug'])}/">紹介したものを見る →</a></div></div></article>'''
 
