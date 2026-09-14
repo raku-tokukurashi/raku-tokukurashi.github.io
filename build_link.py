@@ -11,7 +11,12 @@ data/<slug>.json と posts/<slug>/img/ の画像を足してから実行する�
    - 回のデータに "category"、商品1つずつに "category" と "sub"（subs の slug）を必ず書く。無い・違うと止まる
    - PCは左端の縦メニュー（カテゴリーの下にサブカテゴリーを入れ子）、スマホはヘッダー下の横スクロール
    - /category/<cat>/ はサブカテゴリーごとに商品を並べる。/category/<cat>/<sub>/ はそのサブカテゴリーの商品だけ
-   - 数は商品の数。商品が0件のカテゴリー・サブカテゴリーは出さない"""
+   - 数は商品の数。商品が0件のカテゴリー・サブカテゴリーは出さない
+⚠️ 動画一覧（2026-09-14 監督「あとは動画一覧もあるよね？」）
+   - 回のデータに "videos": [{"kind": "長編|ショート", "title", "id"（YouTubeの動画ID）, "url"}] を書く
+   - /videos/ に新しい順で並べ、端のメニューの「すべて」の下に出す。トップにも最新の動画を出す
+   - 年と月でも分ける（監督「これも一応年と月のサブ内の入れておいて」）。端のメニューで動画一覧の下に「2026年9月」を入れ子にし、
+     /videos/<YYYY-MM>/ を作る。月は動画の "date"（無ければ回の date）で決める"""
 import json
 import re
 from pathlib import Path
@@ -62,11 +67,37 @@ def counts_of(posts):
     return cat, sub
 
 
+def all_videos(posts):
+    """(回, 動画) を新しい回から。1つの回の中は書いた順（長編→ショート）。"""
+    for p in posts:
+        for v in p.get('videos', []):
+            yield p, v
+
+
+def ym_of(p, v):
+    return (v.get('date') or p['date'])[:7]
+
+
+def ym_label(ym):
+    return f"{int(ym[:4])}年{int(ym[5:7])}月"
+
+
+def months_of(posts):
+    """動画のある年月を新しい順に。(YYYY-MM, 本数)"""
+    cnt = {}
+    for p, v in all_videos(posts):
+        cnt[ym_of(p, v)] = cnt.get(ym_of(p, v), 0) + 1
+    return sorted(cnt.items(), reverse=True)
+
+
 def side_nav(posts, up, current=('', '')):
     """端のメニュー。カテゴリーの下にサブカテゴリーを入れ子にする。商品のあるものだけ、site.json の順に出す。"""
     cc, sc = counts_of(posts)
     cur_cat, cur_sub = current
-    rows = [f'<li class="cat"><a href="{up or "./"}"{" aria-current=\"page\"" if not cur_cat else ""}><i aria-hidden="true">🏠</i>すべて<span>{sum(cc.values())}</span></a></li>']
+    rows = [f'<li class="cat"><a href="{up or "./"}"{" aria-current=\"page\"" if not cur_cat else ""}><i aria-hidden="true">🏠</i>すべて<span>{sum(cc.values())}</span></a></li>',
+            f'<li class="cat{" open" if cur_cat == "videos" else ""}"><a href="{up}videos/"{" aria-current=\"page\"" if (cur_cat == "videos" and not cur_sub) else ""}><i aria-hidden="true">▶</i>動画一覧<span>{len(list(all_videos(posts)))}</span></a><ul class="subs">'
+            + ''.join(f'<li><a href="{up}videos/{ym}/"{" aria-current=\"page\"" if (cur_cat == "videos" and cur_sub == ym) else ""}>{ym_label(ym)}<span>{n}</span></a></li>' for ym, n in months_of(posts))
+            + '</ul></li>']
     for c in SITE['categories']:
         if not cc.get(c['slug']):
             continue
@@ -128,7 +159,7 @@ def post_html(p, posts):
     src = p['source']
     title = ''.join(f'<span>{e(s)}</span>' for s in p.get('title_lines', [p['title']]))
     notes = ''.join(f'<p>{e(n)}</p>' for n in p.get('selection_notes', []))
-    video = f'<a class="back" href="{e(p["video_url"])}" target="_blank" rel="noopener">▶ 動画を見る</a>' if p.get('video_url') else ''
+    video = ' '.join(f'<a class="back" href="{e(v["url"])}" target="_blank" rel="noopener">▶ {e(v["kind"])}を見る</a>' for v in p.get('videos', []))
     body = f'''<div class="post-intro"><a class="back" href="../../category/{e(cat['slug'])}/">← {e(cat['name'])}</a> {video}<p class="eyebrow">{e(cat['name'])} / {e(p['date'].replace('-', '.'))}</p><h1>{title}</h1><p class="intro-text">{e(p['lead'])}</p><p class="count">{len(items):02d} ITEMS <span>動画で紹介したもの</span></p></div>
 <nav class="jump" aria-label="紹介したものを探す"><p>{e(p.get("jump_label", "ジャンルから選ぶ"))}</p><div>{jumps}</div></nav>
 <div class="selection-note">{notes}</div>
@@ -158,6 +189,36 @@ def sub_chips(c, sc, prefix, cur=''):
         for s in c.get('subs', []) if sc.get((c['slug'], s['slug'])))
 
 
+def video_card(p, v, prefix):
+    cat = CATS[p['category']]
+    short = v['kind'] == 'ショート'
+    return f'''<article class="video-card{' is-short' if short else ''}"><a class="video-thumb" href="{e(v['url'])}" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/{e(v['id'])}/mqdefault.jpg" alt="{e(v['title'])}" width="320" height="180" decoding="async"><span class="video-kind">{e(v['kind'])}</span><span class="video-play" aria-hidden="true">▶</span></a>
+<div class="video-info"><p class="eyebrow">{e(cat['name'])} / {e(p['date'].replace('-', '.'))}</p><h3>{e(v['title'])}</h3>
+<div class="video-links"><a class="video-yt" href="{e(v['url'])}" target="_blank" rel="noopener">YouTubeで見る ↗</a><a href="{prefix}posts/{e(p['slug'])}/">紹介したものを見る →</a></div></div></article>'''
+
+
+def month_chips(posts, prefix, cur=''):
+    return ''.join(f'<a href="{prefix}videos/{ym}/"{" aria-current=\"page\"" if cur == ym else ""}>{ym_label(ym)}<span>{n}</span></a>' for ym, n in months_of(posts))
+
+
+def videos_html(posts):
+    vs = list(all_videos(posts))
+    blocks = ''.join(
+        f'''<section class="sub-block" id="m-{ym}"><h2 class="group-head">{ym_label(ym)}<a href="{ym}/">{ym_label(ym)}だけ見る →</a></h2><div class="video-grid">{''.join(video_card(p, v, '../') for p, v in vs if ym_of(p, v) == ym)}</div></section>'''
+        for ym, _ in months_of(posts))
+    body = f'''<section class="cat-page"><a class="back" href="../">← すべて</a><div class="section-title"><div><p class="eyebrow">VIDEOS</p><h1>▶ 動画一覧</h1><p class="cat-desc">YouTubeで公開した動画です。紹介したもののリンクは、各回のページにまとめています。</p></div><span>{len(vs)} VIDEOS</span></div>
+<nav class="sub-chips" aria-label="年と月">{month_chips(posts, '../')}</nav>{blocks}</section>'''
+    cover = f"posts/{posts[0]['slug']}/thumb.jpg" if posts else ''
+    return page('動画一覧', body, posts, 'videos/', cover, current=('videos', ''))
+
+
+def month_html(ym, posts):
+    vs = [(p, v) for p, v in all_videos(posts) if ym_of(p, v) == ym]
+    body = f'''<section class="cat-page"><a class="back" href="../">← 動画一覧</a><div class="section-title"><div><p class="eyebrow">VIDEOS</p><h1>▶ {ym_label(ym)}の動画</h1></div><span>{len(vs)} VIDEOS</span></div>
+<nav class="sub-chips" aria-label="年と月">{month_chips(posts, '../../', ym)}</nav><div class="video-grid">{''.join(video_card(p, v, '../../') for p, v in vs)}</div></section>'''
+    return page(f'{ym_label(ym)}の動画', body, posts, f'videos/{ym}/', f"posts/{vs[0][0]['slug']}/thumb.jpg", current=('videos', ym))
+
+
 def hub_html(posts):
     if not posts:
         return page('暮らしのライフハック', '<section class="hero"><h1>準備しています。</h1></section>', posts)
@@ -171,6 +232,7 @@ def hub_html(posts):
         ps = [p for p in posts if any(item_cat(p, it) == c['slug'] for it in p['items'])]
         groups.append(f'''<section class="edits cat-group" id="cat-{e(c['slug'])}"><div class="section-title"><div><p class="eyebrow">CATEGORY</p><h2>{e(c.get('icon', ''))} {e(c['name'])}</h2></div><a class="cat-more" href="category/{e(c['slug'])}/">{cc[c['slug']]}品を見る →</a></div><div class="sub-chips">{sub_chips(c, sc, '')}</div>{''.join(entry(p, '', p is latest) for p in ps[:3])}</section>''')
     body = f'''<section class="hero"><div class="hero-copy"><p class="eyebrow">RAKUTOKU KURASHI</p><h1>知ってたら、<br><em>もっとラク</em>だった。</h1><p>動画で紹介した暮らしのアイデアや<br>ふるさと納税の返礼品を、カテゴリーごとにまとめています。</p><a href="posts/{e(latest['slug'])}/" class="hero-link">最新の回を見る <span>↗</span></a></div><div class="still-life">{still}<span class="still-caption">FROM THE LATEST</span></div></section>
+<section class="edits latest-videos"><div class="section-title"><div><p class="eyebrow">VIDEOS</p><h2>▶ 最新の動画</h2></div><a class="cat-more" href="videos/">動画一覧へ →</a></div><div class="video-grid">{''.join(video_card(p, v, '') for p, v in list(all_videos(posts))[:4])}</div></section>
 {''.join(groups)}
 <section class="about"><p class="eyebrow">OUR POINT OF VIEW</p><h2>良かった声も、<br>気をつけたい声も。</h2><p>みんなのレビューを読んで、<br>選ぶときのきっかけになるようにまとめています。</p><p class="about-note">コメントはレビューの要約です。<br>特定の1人の体験ではありません。</p></section>'''
     return page('動画で紹介したもの', body, posts, cover=f"posts/{latest['slug']}/thumb.jpg")
@@ -229,6 +291,11 @@ def main():
                 (target / s['slug']).mkdir(parents=True, exist_ok=True)
                 (target / s['slug'] / 'index.html').write_text(sub_html(c, s, posts), encoding='utf-8')
                 n_sub += 1
+    (ROOT / 'videos').mkdir(exist_ok=True)
+    (ROOT / 'videos' / 'index.html').write_text(videos_html(posts), encoding='utf-8')
+    for ym, _ in months_of(posts):
+        (ROOT / 'videos' / ym).mkdir(exist_ok=True)
+        (ROOT / 'videos' / ym / 'index.html').write_text(month_html(ym, posts), encoding='utf-8')
     (ROOT / 'index.html').write_text(hub_html(posts), encoding='utf-8')
     print(f'Built {len(posts)} posts, {sum(1 for c in cc if cc[c])} categories, {n_sub} subcategories and index')
 

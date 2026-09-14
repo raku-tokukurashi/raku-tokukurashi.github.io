@@ -11,7 +11,20 @@
     "食べ物21選"
   ],
   "lead": "YouTubeの10分動画で紹介した返礼品21品です。楽天ふるさと納税のレビューをもとに、お米・お肉・海鮮・果物とスイーツに分けています。",
-  "video_url": "https://youtu.be/I5w-ulrKglw",
+  "videos": [
+    {
+      "kind": "長編",
+      "title": "【ふるさと納税】頼んだ人の声が止まらない…リピートされてる食べ物の返礼品21選",
+      "id": "I5w-ulrKglw",
+      "url": "https://youtu.be/I5w-ulrKglw"
+    },
+    {
+      "kind": "ショート",
+      "title": "レビュー1万件超え！ふるさと納税の食べ物6選",
+      "id": "jJWIr_-0m5w",
+      "url": "https://www.youtube.com/shorts/jJWIr_-0m5w"
+    }
+  ],
   "review_label": "レビューの要約",
   "price_label": "2026年9月14日時点",
   "jump_label": "ジャンルから選ぶ",
