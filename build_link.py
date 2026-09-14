@@ -94,10 +94,18 @@ def side_nav(posts, up, current=('', '')):
     """端のメニュー。カテゴリーの下にサブカテゴリーを入れ子にする。商品のあるものだけ、site.json の順に出す。"""
     cc, sc = counts_of(posts)
     cur_cat, cur_sub = current
-    rows = [f'<li class="cat"><a href="{up or "./"}"{" aria-current=\"page\"" if not cur_cat else ""}><i aria-hidden="true">🏠</i>すべて<span>{sum(cc.values())}</span></a></li>',
-            f'<li class="cat{" open" if cur_cat == "videos" else ""}"><a href="{up}videos/"{" aria-current=\"page\"" if (cur_cat == "videos" and not cur_sub) else ""}><i aria-hidden="true">▶</i>動画一覧<span>{len(list(all_videos(posts)))}</span></a><ul class="subs">'
-            + ''.join(f'<li><a href="{up}videos/{ym}/"{" aria-current=\"page\"" if (cur_cat == "videos" and cur_sub == ym) else ""}>{ym_label(ym)}<span>{n}</span></a></li>' for ym, n in months_of(posts))
-            + '</ul></li>']
+    def group(key, link, subs, is_open):
+        """カテゴリー1つ分。右の ▾ でサブカテゴリーを開け閉めできる（監督「それぞれサブカテゴリーなどを展開とか自由にできるようにして」）。
+           今いるカテゴリーは開いた状態で出す。ほかは閉じた状態で出し、開け閉めはブラウザに覚えさせる（下のスクリプト）。"""
+        if not subs:
+            return f'<li class="cat"><div class="cat-row">{link}</div></li>'
+        return (f'<li class="cat{" open" if is_open else ""}" data-key="{e(key)}"><div class="cat-row">{link}'
+                f'<button class="tog" type="button" aria-expanded="{"true" if is_open else "false"}" aria-label="サブカテゴリーを開け閉めする">▾</button></div>'
+                f'<ul class="subs"{"" if is_open else " hidden"}>{subs}</ul></li>')
+
+    rows = [group('all', f'<a href="{up or "./"}"{" aria-current=\"page\"" if not cur_cat else ""}><i aria-hidden="true">🏠</i>すべて<span>{sum(cc.values())}</span></a>', '', False)]
+    vsubs = ''.join(f'<li><a href="{up}videos/{ym}/"{" aria-current=\"page\"" if (cur_cat == "videos" and cur_sub == ym) else ""}>{ym_label(ym)}<span>{n}</span></a></li>' for ym, n in months_of(posts))
+    rows.append(group('videos', f'<a href="{up}videos/"{" aria-current=\"page\"" if (cur_cat == "videos" and not cur_sub) else ""}><i aria-hidden="true">▶</i>動画一覧<span>{len(list(all_videos(posts)))}</span></a>', vsubs, cur_cat == 'videos'))
     for c in SITE['categories']:
         if not cc.get(c['slug']):
             continue
@@ -105,9 +113,9 @@ def side_nav(posts, up, current=('', '')):
         subs = ''.join(
             f'<li><a href="{up}category/{e(c["slug"])}/{e(s["slug"])}/"{" aria-current=\"page\"" if (cur_cat == c["slug"] and cur_sub == s["slug"]) else ""}>{e(s["name"])}<span>{sc[(c["slug"], s["slug"])]}</span></a></li>'
             for s in c.get('subs', []) if sc.get((c['slug'], s['slug'])))
-        open_cls = ' open' if cur_cat == c['slug'] else ''
-        rows.append(f'<li class="cat{open_cls}"><a href="{up}category/{e(c["slug"])}/"{on}><i aria-hidden="true">{e(c.get("icon", ""))}</i>{e(c["name"])}<span>{cc[c["slug"]]}</span></a><ul class="subs">{subs}</ul></li>')
-    return f'<nav class="side" aria-label="カテゴリー"><p class="side-title">CATEGORY</p><ul>{"".join(rows)}</ul></nav>'
+        rows.append(group(c['slug'], f'<a href="{up}category/{e(c["slug"])}/"{on}><i aria-hidden="true">{e(c.get("icon", ""))}</i>{e(c["name"])}<span>{cc[c["slug"]]}</span></a>', subs, cur_cat == c['slug']))
+    return (f'<nav class="side" aria-label="カテゴリー"><div class="side-head"><p class="side-title">CATEGORY</p>'
+            f'<span class="side-all"><button type="button" data-all="open">すべて開く</button><button type="button" data-all="close">閉じる</button></span></div><ul>{"".join(rows)}</ul></nav>')
 
 
 def page(title, body, posts, path='', cover='', current=('', '')):
@@ -121,7 +129,10 @@ def page(title, body, posts, path='', cover='', current=('', '')):
 <meta name="theme-color" content="#f3f7f3"><link rel="icon" href="{up}favicon.svg"><link rel="stylesheet" href="{up}style.css">
 </head><body><a class="skip" href="#main">本文へ</a><div class="ad"><span>PR</span> 楽天アフィリエイトを利用しています</div>
 <header class="masthead"><a href="{up or './'}" aria-label="らく得くらしまとめ トップ"><span class="wordmark">らく得くらし</span><span class="mast-sub">暮らしのライフハックまとめ</span></a><span class="edition">LIFEHACK NOTE</span></header>
-<div class="layout">{side_nav(posts, up, current)}<main id="main">{body}</main></div><footer><div class="footer-brand">らく得くらし <span>毎日が、ちょっとラクになる。</span></div><details><summary>広告・寄付額・レビューについて</summary><p>リンク先でお申し込み・ご購入されると、紹介料を受け取ることがあります。</p>{notes}</details><p class="copyright">らく得くらしまとめ</p></footer></body></html>'''
+<div class="layout">{side_nav(posts, up, current)}<main id="main">{body}</main></div><footer><div class="footer-brand">らく得くらし <span>毎日が、ちょっとラクになる。</span></div><details><summary>広告・寄付額・レビューについて</summary><p>リンク先でお申し込み・ご購入されると、紹介料を受け取ることがあります。</p>{notes}</details><p class="copyright">らく得くらしまとめ</p></footer><script>(function(){{var K='rakutoku-side-open',st={{}};try{{st=JSON.parse(localStorage.getItem(K)||'{{}}')}}catch(e){{}}
+function set(li,open,save){{var b=li.querySelector('.tog'),u=li.querySelector('.subs');if(!b||!u)return;b.setAttribute('aria-expanded',open?'true':'false');u.hidden=!open;li.classList.toggle('open',open);if(save){{st[li.dataset.key]=open;try{{localStorage.setItem(K,JSON.stringify(st))}}catch(e){{}}}}}}
+document.querySelectorAll('.side li.cat[data-key]').forEach(function(li){{var k=li.dataset.key;if(k in st&&!li.querySelector('[aria-current]'))set(li,st[k],false);li.querySelector('.tog').addEventListener('click',function(){{set(li,this.getAttribute('aria-expanded')!=='true',true)}})}});
+document.querySelectorAll('.side-all button').forEach(function(b){{b.addEventListener('click',function(){{var o=b.dataset.all==='open';document.querySelectorAll('.side li.cat[data-key]').forEach(function(li){{set(li,o,true)}})}})}});}})();</script></body></html>'''
 
 
 def price_html(p, it):
