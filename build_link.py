@@ -148,11 +148,18 @@ def post_html(p, posts):
     jumps = ''.join(f'<a href="#item-{i}">{e(it["rank"])}<span>{e(it.get("brand", ""))}</span></a>' for i, it in enumerate(items))
     cards, last = [], None
     for i, it in enumerate(items):
-        key = (item_cat(p, it), it['sub'])
-        if key != last:          # サブカテゴリーが変わるところに見出し（サブカテゴリーのページへ飛べる）
-            ic = CATS[key[0]]
-            cards.append(f'<h2 class="group-head"><i aria-hidden="true">{e(ic.get("icon", ""))}</i>{e(sub_name(p, it))}<a href="../../category/{e(key[0])}/{e(key[1])}/">ほかの回の{e(sub_name(p, it))}も見る →</a></h2>')
-            last = key
+        # 見出しは動画の並び（rank＝動画の分類）で区切る。回の中で同じ見出しが何度も出ないように（2026-09-14）
+        # 区切りの中の商品が全部同じサブカテゴリーなら、そのサブカテゴリーのページへのリンクを付ける
+        if it['rank'] != last:
+            group = [x for x in items if x['rank'] == it['rank']]
+            keys = {(item_cat(p, x), x['sub']) for x in group}
+            ic = CATS[item_cat(p, it)]
+            link = ''
+            if len(keys) == 1:
+                c0, s0 = next(iter(keys))
+                link = f'<a href="../../category/{e(c0)}/{e(s0)}/">ほかの回の{e(SUBS[(c0, s0)]["name"])}も見る →</a>'
+            cards.append(f'<h2 class="group-head"><i aria-hidden="true">{e(ic.get("icon", ""))}</i>{e(it["rank"])}{link}</h2>')
+            last = it['rank']
         voices = it.get('voices', [it.get('copy', '')])
         positive = voices[:-1] if len(voices) > 1 and it.get('last_is_caution', True) else voices
         caution = voices[-1] if len(voices) > 1 and it.get('last_is_caution', True) else ''
