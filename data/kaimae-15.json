@@ -18,7 +18,24 @@
     "気になる声は、使い方やおうちの条件によって感じ方が変わるものです。",
     "サイズ・素材・性能などは各メーカー（ショップ）の表記です。"
   ],
-  "videos": [],
+  "videos": [
+    {
+      "kind": "長編",
+      "title": "【買う前に見て】レビューは高いのに「ここは気をつけて」の声がある家事グッズ15選",
+      "id": "kd9G0EyW7Lc",
+      "url": "https://youtu.be/kd9G0EyW7Lc",
+      "date": "2026-09-16",
+      "thumb": "posts/kaimae-15/video_long.jpg"
+    },
+    {
+      "kind": "ショート",
+      "title": "レビューは高いのに…買う前に見て！「ここは気をつけて」の声がある家事グッズ6選",
+      "id": "SWYvTVulNV8",
+      "url": "https://www.youtube.com/shorts/SWYvTVulNV8",
+      "date": "2026-09-16",
+      "thumb": "posts/kaimae-15/video_short.jpg"
+    }
+  ],
   "source": {
     "name": "楽天市場 各商品ページのレビュー",
     "url": "https://www.rakuten.co.jp/",
