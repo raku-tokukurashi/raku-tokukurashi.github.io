@@ -38,6 +38,26 @@
       ]
     },
     {
+      "slug": "travel",
+      "name": "旅行・お出かけ",
+      "icon": "🧳",
+      "desc": "旅行・帰省・子連れのお出かけで便利なもの。",
+      "subs": [
+        {
+          "slug": "packing",
+          "name": "パッキング"
+        },
+        {
+          "slug": "moving",
+          "name": "移動中"
+        },
+        {
+          "slug": "outing",
+          "name": "子連れ・宿"
+        }
+      ]
+    },
+    {
       "slug": "kaji",
       "name": "家事・掃除・洗濯",
       "icon": "🧹",
