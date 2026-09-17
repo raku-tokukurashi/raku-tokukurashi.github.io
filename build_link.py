@@ -119,6 +119,43 @@ def side_nav(posts, up, current=('', '')):
             f'<span class="side-all"><button type="button" data-all="open">すべて開く</button><button type="button" data-all="close">閉じる</button></span></div><ul>{"".join(rows)}</ul></nav>')
 
 
+def analytics_head():
+    """site.json の analytics にIDを入れると、全ページの <head> にタグが入る。
+       未設定（空文字）なら何も出さない。GA4とClarityの両方に対応。"""
+    a = SITE.get('analytics') or {}
+    out = ''
+    ga = (a.get('ga4') or '').strip()
+    if ga:
+        out += (f'<script async src="https://www.googletagmanager.com/gtag/js?id={e(ga)}"></script>'
+                '<script>window.dataLayer=window.dataLayer||[];'
+                'function gtag(){dataLayer.push(arguments)}gtag(\'js\',new Date());'
+                f'gtag(\'config\',\'{e(ga)}\');</script>')
+    cl = (a.get('clarity') or '').strip()
+    if cl:
+        out += ('<script>(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};'
+                't=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;'
+                'y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);'
+                f'}})(window,document,"clarity","script","{e(cl)}");</script>')
+    return out
+
+
+def analytics_clicks():
+    """楽天へ出ていくリンク（rel に sponsored が付いているもの）のクリックを数える。
+       どのページのどの商品から出たかを記録する。タグが無ければ何もしない。"""
+    a = SITE.get('analytics') or {}
+    if not (a.get('ga4') or '').strip():
+        return ''
+    return ("<script>document.addEventListener('click',function(ev){"
+            "var a=ev.target.closest&&ev.target.closest('a[rel~=\"sponsored\"]');if(!a)return;"
+            "var c=a.closest('.product-card,.mini-card');"
+            "var nm=c?(c.querySelector('h2,h3')||{}).textContent:a.textContent;"
+            "if(typeof gtag==='function'){gtag('event','rakuten_click',{"
+            "item_name:(nm||'').trim().slice(0,90),"
+            "place:a.className.indexOf('mini')>=0?'category':'post',"
+            "page_path:location.pathname});}"
+            "},true);</script>")
+
+
 def page(title, body, posts, path='', cover='', current=('', '')):
     up = '../' * path.count('/')
     url = SITE['site_url'].rstrip('/') + '/' + path
@@ -127,13 +164,13 @@ def page(title, body, posts, path='', cover='', current=('', '')):
     return f'''<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)}｜{e(SITE['name'])}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{e(url)}">
 <meta property="og:type" content="website"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{e(url)}"><meta property="og:image" content="{e(SITE['site_url'])}/{e(cover)}"><meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f3f7f3"><link rel="icon" href="{up}favicon.svg"><link rel="stylesheet" href="{up}style.css">
+<meta name="theme-color" content="#f3f7f3"><link rel="icon" href="{up}favicon.svg"><link rel="stylesheet" href="{up}style.css">{analytics_head()}
 </head><body><a class="skip" href="#main">本文へ</a><div class="ad"><span>PR</span> 楽天アフィリエイトを利用しています</div>
 <header class="masthead"><a href="{up or './'}" aria-label="らく得くらしまとめ トップ"><span class="wordmark">らく得くらし</span><span class="mast-sub">暮らしのライフハックまとめ</span></a><span class="edition">LIFEHACK NOTE</span></header>
 <div class="layout">{side_nav(posts, up, current)}<main id="main">{body}</main></div><footer><div class="footer-brand">らく得くらし <span>毎日が、ちょっとラクになる。</span></div><details><summary>広告・寄付額・レビューについて</summary><p>リンク先でお申し込み・ご購入されると、紹介料を受け取ることがあります。</p>{notes}</details><p class="copyright">らく得くらしまとめ</p></footer><script>(function(){{var K='rakutoku-side-open',st={{}};try{{st=JSON.parse(localStorage.getItem(K)||'{{}}')}}catch(e){{}}
 function set(li,open,save){{var b=li.querySelector('.tog'),u=li.querySelector('.subs');if(!b||!u)return;b.setAttribute('aria-expanded',open?'true':'false');u.hidden=!open;li.classList.toggle('open',open);if(save){{st[li.dataset.key]=open;try{{localStorage.setItem(K,JSON.stringify(st))}}catch(e){{}}}}}}
 document.querySelectorAll('.side li.cat[data-key]').forEach(function(li){{var k=li.dataset.key;if(k in st&&!li.querySelector('[aria-current]'))set(li,st[k],false);li.querySelector('.tog').addEventListener('click',function(){{set(li,this.getAttribute('aria-expanded')!=='true',true)}})}});
-document.querySelectorAll('.side-all button').forEach(function(b){{b.addEventListener('click',function(){{var o=b.dataset.all==='open';document.querySelectorAll('.side li.cat[data-key]').forEach(function(li){{set(li,o,true)}})}})}});}})();</script></body></html>'''
+document.querySelectorAll('.side-all button').forEach(function(b){{b.addEventListener('click',function(){{var o=b.dataset.all==='open';document.querySelectorAll('.side li.cat[data-key]').forEach(function(li){{set(li,o,true)}})}})}});}})();</script>{analytics_clicks()}</body></html>'''
 
 
 def price_html(p, it):
@@ -196,9 +233,12 @@ def mini_card(p, i, it, prefix):
     """カテゴリーページの商品カード。写真・名前・値段・紹介した回・楽天へのボタン。"""
     price = f'寄付額 {e(it["price"])}円' if p.get('kind') == 'furusato' else f'¥{e(it["price"])}'
     cta = '楽天ふるさと納税で見る' if p.get('kind') == 'furusato' else '楽天で見る'
+    # リンクの直前に、押した先で何が分かるかを書く（2026-09-16）
+    bridge = '受付状況はリンク先で' if p.get('kind') == 'furusato' else '在庫・送料はリンク先で'
     return f'''<article class="mini-card"><a class="mini-photo" href="{prefix}posts/{e(p['slug'])}/#item-{i}">{image(p, it, prefix)}</a>
 <div class="mini-info"><p class="brand">{e(it.get('brand', ''))}</p><h3><a href="{prefix}posts/{e(p['slug'])}/#item-{i}">{e(it.get('product', it['name']))}</a></h3><p class="mini-price">{price}<span>{e(it['size'])}</span></p>
 <p class="mini-from">紹介した回：<a href="{prefix}posts/{e(p['slug'])}/">{e(p['title'])}</a></p>
+<p class="mini-bridge">{e(bridge)}</p>
 <a class="mini-buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener">{cta} ↗</a></div></article>'''
 
 
