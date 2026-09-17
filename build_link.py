@@ -174,6 +174,9 @@ document.querySelectorAll('.side-all button').forEach(function(b){{b.addEventLis
 
 
 def price_html(p, it):
+    if p.get('kind') == 'spot':
+        # 旅先の回。値段ではなく「行き方」を出す（2026-09-17 監督「旅行はものじゃなくて旅先をおしてほしい」）
+        return f'<p class="price"><span class="pre">行き方</span>{e(it["price"])}<span>{e(p.get("price_label", ""))}</span></p>'
     if p.get('kind') == 'furusato':
         return f'<p class="price"><span class="pre">寄付額</span>{e(it["price"])}円<span>{e(p.get("price_label", ""))}</span></p>'
     return f'<p class="price">¥{e(it["price"])}<span>{e(p.get("price_label", "税込・確認時点の価格"))}</span></p>'
@@ -204,14 +207,14 @@ def post_html(p, posts):
         feedback = ''.join(f'<li>{e(v)}</li>' for v in positive)
         caution_html = f'<p class="caution"><span>気になる声</span>{e(caution)}</p>' if caution else ''
         words = ''.join(f'<span class="name-part">{e(w)}</span> ' for w in it.get('product', it['name']).split(' '))
-        cta = '楽天ふるさと納税で見る' if furusato else '楽天で価格・在庫を見る'
-        note = '寄付額・内容・受付状況はリンク先でご確認ください' if furusato else '販売価格・容量・送料はリンク先でご確認ください'
+        spot = p.get('kind') == 'spot'
+        cta = '楽天ふるさと納税で見る' if (furusato or spot) else '楽天で価格・在庫を見る'
+        note = '寄付額・内容・受付状況はリンク先でご確認ください' if (furusato or spot) else '販売価格・容量・送料はリンク先でご確認ください'
         cards.append(f'''<article class="product-card" id="item-{i}">
 <div class="product-top"><div class="product-photo"><span class="rank">{e(it['rank'])}</span>{image(p, it, '../../', i > 1)}</div>
 <div class="product-info"><p class="brand">{e(it.get('brand', ''))}</p><h2>{words}</h2><p class="size">{e(it['size'])}</p>{price_html(p, it)}</div></div>
 <div class="review"><p class="review-label">{e(p.get("review_label", "レビューの要約"))}</p><ul>{feedback}</ul>{caution_html}</div>
-<a class="buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener" aria-label="{e(it['name'])}：{cta}（新しいタブ）">{cta} <span aria-hidden="true">↗</span></a>
-<p class="shop-note">{note}</p></article>''')
+{f'<a class="buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener" aria-label="{e(it["name"])}：{cta}（新しいタブ）">{cta} <span aria-hidden="true">↗</span></a><p class="shop-note">{note}</p>' if it.get("url") or it.get("affiliate_url") else ""}</article>''')
     src = p['source']
     title = ''.join(f'<span>{e(s)}</span>' for s in p.get('title_lines', [p['title']]))
     notes = ''.join(f'<p>{e(n)}</p>' for n in p.get('selection_notes', []))
@@ -231,15 +234,17 @@ def entry(p, prefix, latest=False):
 
 def mini_card(p, i, it, prefix):
     """カテゴリーページの商品カード。写真・名前・値段・紹介した回・楽天へのボタン。"""
-    price = f'寄付額 {e(it["price"])}円' if p.get('kind') == 'furusato' else f'¥{e(it["price"])}'
-    cta = '楽天ふるさと納税で見る' if p.get('kind') == 'furusato' else '楽天で見る'
+    if p.get('kind') == 'spot':   price = e(it["price"])
+    elif p.get('kind') == 'furusato': price = f'寄付額 {e(it["price"])}円'
+    else: price = f'¥{e(it["price"])}'
+    cta = '楽天ふるさと納税で見る' if p.get('kind') in ('furusato', 'spot') else '楽天で見る'
     # リンクの直前に、押した先で何が分かるかを書く（2026-09-16）
-    bridge = '受付状況はリンク先で' if p.get('kind') == 'furusato' else '在庫・送料はリンク先で'
+    bridge = '受付状況はリンク先で' if p.get('kind') in ('furusato', 'spot') else '在庫・送料はリンク先で'
     return f'''<article class="mini-card"><a class="mini-photo" href="{prefix}posts/{e(p['slug'])}/#item-{i}">{image(p, it, prefix)}</a>
 <div class="mini-info"><p class="brand">{e(it.get('brand', ''))}</p><h3><a href="{prefix}posts/{e(p['slug'])}/#item-{i}">{e(it.get('product', it['name']))}</a></h3><p class="mini-price">{price}<span>{e(it['size'])}</span></p>
 <p class="mini-from">紹介した回：<a href="{prefix}posts/{e(p['slug'])}/">{e(p['title'])}</a></p>
 <p class="mini-bridge">{e(bridge)}</p>
-<a class="mini-buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener">{cta} ↗</a></div></article>'''
+{f'<a class="mini-buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener">{cta} ↗</a>' if it.get("url") or it.get("affiliate_url") else ""}</div></article>'''
 
 
 def sub_chips(c, sc, prefix, cur=''):
