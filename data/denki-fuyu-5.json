@@ -18,7 +18,24 @@
   "「使った人の声」は、同じ種類の物（電気毛布・湯たんぽなど）についての書き込みの要約で、この商品そのものの感想とは限りません。",
   "湯たんぽ・電気毛布・電気ひざ掛けは、低温やけどに気をつけてください。同じ場所に長く当て続けない、寝るときは弱にするか切る、湯たんぽは必ずカバーを付けて足から離す。"
  ],
- "videos": [],
+ "videos": [
+  {
+   "kind": "長編",
+   "title": "【有益】エアコンが高くてつけられない…電気代が怖い冬、もっと早く買えばよかったものを教えて【ガルちゃん有益まとめ】",
+   "id": "kSLqUDm2xkg",
+   "url": "https://youtu.be/kSLqUDm2xkg",
+   "date": "2026-09-19",
+   "thumb": "posts/denki-fuyu-5/video_long.jpg"
+  },
+  {
+   "kind": "ショート",
+   "title": "エアコンが高くてつけられない…もっと早く買えばよかった冬の5つ #電気代 #寒さ対策 #Shorts",
+   "id": "QL5tV51aSzM",
+   "url": "https://www.youtube.com/shorts/QL5tV51aSzM",
+   "date": "2026-09-19",
+   "thumb": "posts/denki-fuyu-5/video_short.jpg"
+  }
+ ],
  "source": {
   "name": "ガールズちゃんねる「暖房 電気代」「寒さ対策」「電気毛布」「湯たんぽ」ほかのトピ",
   "url": "https://girlschannel.net/",
