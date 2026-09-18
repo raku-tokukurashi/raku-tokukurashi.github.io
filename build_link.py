@@ -30,6 +30,13 @@ CATS = {c['slug']: c for c in SITE['categories']}
 SUBS = {(c['slug'], s['slug']): s for c in SITE['categories'] for s in c.get('subs', [])}
 
 
+def measure_path():
+    """楽天の計測ID。site.json に入れておくと、リンクが /ichiba/<アフィID>/_RTLinkXXXXXX?pc=... になり、
+       楽天のレポートで「どの媒体から押されたか」が分かるようになる。未設定なら付かない。"""
+    mid = ((SITE.get('analytics') or {}).get('rakuten_measure_id') or '').strip()
+    return mid
+
+
 def e(value):
     return escape(str(value), quote=True)
 
@@ -50,7 +57,7 @@ def sub_name(p, it):
 
 
 def aff(it):
-    return it.get('affiliate_url') or 'https://hb.afl.rakuten.co.jp/ichiba/' + SITE['aff_id'] + '/?' + urlencode({'pc': it['url'], 'm': it['url']})
+    return it.get('affiliate_url') or 'https://hb.afl.rakuten.co.jp/ichiba/' + SITE['aff_id'] + '/' + measure_path() + '?' + urlencode({'pc': it['url'], 'm': it['url']})
 
 
 def all_items(posts):
@@ -156,11 +163,27 @@ def analytics_clicks():
             "},true);</script>")
 
 
+def analytics_note():
+    """解析タグを入れたときだけ、フッターの注意書きに外部送信の一行を足す。"""
+    a = SITE.get('analytics') or {}
+    names = []
+    if (a.get('ga4') or '').strip():
+        names.append('Googleアナリティクス')
+    if (a.get('clarity') or '').strip():
+        names.append('Microsoft Clarity')
+    if not names:
+        return ''
+    return ('<p>このサイトでは、どのページが読まれているかを知るために'
+            + '・'.join(names)
+            + 'を使っています。閲覧されたページなどの情報が、これらの提供元へ送信されます。'
+            '個人を特定する情報は集めていません。</p>')
+
+
 def page(title, body, posts, path='', cover='', current=('', '')):
     up = '../' * path.count('/')
     url = SITE['site_url'].rstrip('/') + '/' + path
     desc = SITE['desc']
-    notes = ''.join(f'<p>{e(n)}</p>' for n in SITE['notes'])
+    notes = ''.join(f'<p>{e(n)}</p>' for n in SITE['notes']) + analytics_note()
     return f'''<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)}｜{e(SITE['name'])}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{e(url)}">
 <meta property="og:type" content="website"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{e(url)}"><meta property="og:image" content="{e(SITE['site_url'])}/{e(cover)}"><meta name="twitter:card" content="summary_large_image">
