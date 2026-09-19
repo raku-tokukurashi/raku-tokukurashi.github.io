@@ -146,8 +146,22 @@ def analytics_head():
     return out
 
 
+def amazon_note():
+    """Amazonアソシエイトの表記（規約で必須の文言）。site.json の amazon_tag が入っているときだけ、楽天の表記と並べて出す。
+       2026-09-19 監督「アフィはAmazonを優先」（半年で3件のノルマ）。まい垢の build_link.py と同じ"""
+    if not (SITE.get('amazon_tag') or '').strip():
+        return ''
+    return '<span class="ad-sep" aria-hidden="true">／</span>Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています。'
+
+
+def amazon_url(it):
+    """商品に amazon_url（SiteStripe の短縮リンク）があれば返す。無ければ空＝楽天だけ"""
+    return (it.get('amazon_url') or '').strip()
+
+
 def analytics_clicks():
-    """楽天へ出ていくリンク（rel に sponsored が付いているもの）のクリックを数える。
+    """楽天・Amazonへ出ていくリンク（rel に sponsored が付いているもの）のクリックを数える。
+       data-shop="amazon" のボタンは amazon_click、それ以外は従来どおり rakuten_click（2026-09-19 Amazon優先）。
        どのページのどの商品から出たかを記録する。タグが無ければ何もしない。"""
     a = SITE.get('analytics') or {}
     if not (a.get('ga4') or '').strip():
@@ -156,8 +170,9 @@ def analytics_clicks():
             "var a=ev.target.closest&&ev.target.closest('a[rel~=\"sponsored\"]');if(!a)return;"
             "var c=a.closest('.product-card,.mini-card');"
             "var nm=c?(c.querySelector('h2,h3')||{}).textContent:a.textContent;"
-            "if(typeof gtag==='function'){gtag('event','rakuten_click',{"
-            "item_name:(nm||'').trim().slice(0,90),"
+            "var shop=a.getAttribute('data-shop')||'rakuten';"
+            "if(typeof gtag==='function'){gtag('event',shop==='amazon'?'amazon_click':'rakuten_click',{"
+            "item_name:(nm||'').trim().slice(0,90),shop:shop,"
             "place:a.className.indexOf('mini')>=0?'category':'post',"
             "page_path:location.pathname});}"
             "},true);</script>")
@@ -188,7 +203,7 @@ def page(title, body, posts, path='', cover='', current=('', '')):
 <title>{e(title)}｜{e(SITE['name'])}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{e(url)}">
 <meta property="og:type" content="website"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{e(url)}"><meta property="og:image" content="{e(SITE['site_url'])}/{e(cover)}"><meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f3f7f3"><link rel="icon" href="{up}favicon.svg"><link rel="stylesheet" href="{up}style.css">{analytics_head()}
-</head><body><a class="skip" href="#main">本文へ</a><div class="ad"><span>PR</span> 楽天アフィリエイトを利用しています</div>
+</head><body><a class="skip" href="#main">本文へ</a><div class="ad"><span>PR</span> 楽天アフィリエイトを利用しています{amazon_note()}</div>
 <header class="masthead"><a href="{up or './'}" aria-label="らく得くらしまとめ トップ"><span class="wordmark">らく得くらし</span><span class="mast-sub">暮らしのライフハックまとめ</span></a><span class="edition">LIFEHACK NOTE</span></header>
 <div class="layout">{side_nav(posts, up, current)}<main id="main">{body}</main></div><footer><div class="footer-brand">らく得くらし <span>毎日が、ちょっとラクになる。</span></div><details><summary>広告・寄付額・レビューについて</summary><p>リンク先でお申し込み・ご購入されると、紹介料を受け取ることがあります。</p>{notes}</details><p class="copyright">らく得くらしまとめ</p></footer><script>(function(){{var K='rakutoku-side-open',st={{}};try{{st=JSON.parse(localStorage.getItem(K)||'{{}}')}}catch(e){{}}
 function set(li,open,save){{var b=li.querySelector('.tog'),u=li.querySelector('.subs');if(!b||!u)return;b.setAttribute('aria-expanded',open?'true':'false');u.hidden=!open;li.classList.toggle('open',open);if(save){{st[li.dataset.key]=open;try{{localStorage.setItem(K,JSON.stringify(st))}}catch(e){{}}}}}}
@@ -233,11 +248,14 @@ def post_html(p, posts):
         spot = p.get('kind') == 'spot'
         cta = '楽天ふるさと納税で見る' if (furusato or spot) else '楽天で価格・在庫を見る'
         note = '寄付額・内容・受付状況はリンク先でご確認ください' if (furusato or spot) else '販売価格・容量・送料はリンク先でご確認ください'
+        # Amazonのリンクがある商品は Amazon を先に、楽天は2番目（2026-09-19 監督「アマゾンが半年でノルマがあるので」）
+        amz_btn = (f'<a class="buy buy-amazon" href="{e(amazon_url(it))}" data-shop="amazon" target="_blank" rel="nofollow sponsored noopener" '
+                   f'aria-label="{e(it["name"])}：Amazonで見る（新しいタブ）">Amazonで見る <span aria-hidden="true">↗</span></a>') if amazon_url(it) else ''
         cards.append(f'''<article class="product-card" id="item-{i}">
 <div class="product-top"><div class="product-photo"><span class="rank">{e(it['rank'])}</span>{image(p, it, '../../', i > 1)}</div>
 <div class="product-info"><p class="brand">{e(it.get('brand', ''))}</p><h2>{words}</h2><p class="size">{e(it['size'])}</p>{price_html(p, it)}</div></div>
 <div class="review"><p class="review-label">{e(p.get("review_label", "レビューの要約"))}</p><ul>{feedback}</ul>{caution_html}</div>
-{f'<a class="buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener" aria-label="{e(it["name"])}：{cta}（新しいタブ）">{cta} <span aria-hidden="true">↗</span></a><p class="shop-note">{note}</p>' if it.get("url") or it.get("affiliate_url") else ""}</article>''')
+{amz_btn}{f'<a class="buy{" buy-sub" if amz_btn else ""}" href="{e(aff(it))}" data-shop="rakuten" target="_blank" rel="nofollow sponsored noopener" aria-label="{e(it["name"])}：{cta}（新しいタブ）">{cta} <span aria-hidden="true">↗</span></a>' if it.get("url") or it.get("affiliate_url") else ""}{f'<p class="shop-note">{note}</p>' if (amz_btn or it.get("url") or it.get("affiliate_url")) else ""}</article>''')
     src = p['source']
     title = ''.join(f'<span>{e(s)}</span>' for s in p.get('title_lines', [p['title']]))
     notes = ''.join(f'<p>{e(n)}</p>' for n in p.get('selection_notes', []))
@@ -267,7 +285,7 @@ def mini_card(p, i, it, prefix):
 <div class="mini-info"><p class="brand">{e(it.get('brand', ''))}</p><h3><a href="{prefix}posts/{e(p['slug'])}/#item-{i}">{e(it.get('product', it['name']))}</a></h3><p class="mini-price">{price}<span>{e(it['size'])}</span></p>
 <p class="mini-from">紹介した回：<a href="{prefix}posts/{e(p['slug'])}/">{e(p['title'])}</a></p>
 <p class="mini-bridge">{e(bridge)}</p>
-{f'<a class="mini-buy" href="{e(aff(it))}" target="_blank" rel="nofollow sponsored noopener">{cta} ↗</a>' if it.get("url") or it.get("affiliate_url") else ""}</div></article>'''
+{f'<a class="mini-buy" href="{e(amazon_url(it))}" data-shop="amazon" target="_blank" rel="nofollow sponsored noopener">Amazonで見る ↗</a>' if amazon_url(it) else ""}{f'<a class="mini-buy{" mini-sub" if amazon_url(it) else ""}" href="{e(aff(it))}" data-shop="rakuten" target="_blank" rel="nofollow sponsored noopener">{cta} ↗</a>' if it.get("url") or it.get("affiliate_url") else ""}</div></article>'''
 
 
 def sub_chips(c, sc, prefix, cur=''):
